@@ -1,0 +1,270 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3c.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
+<head>
+<meta charset="utf8"/>
+<meta http-equiv="pragma" content="no-cache"/>
+<script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/leaflet/1.6.0/leaflet.js"></script>
+<link href="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet"/>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+<script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+<meta name="apple-mobile-web-app-title" content="Rotate Map"/>
+
+<!-- // OGP tags -->
+<meta property="og:title" content="Rotate Map"/>
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://github.com/dotnsf/line_liff_map/"/>
+<meta property="og:image" content="https://dotnsf.github.io/om/icon.png"/>
+<meta property="og:site_name" content="Rotate Map"/>
+<meta property="og:description" content="Rotate Map : DeviceOrientationEvent enabled map."/>
+<!-- OGP tags // -->
+
+<!-- // Twitter Card -->
+<meta property="twitter:card" content="summary"/>
+<meta property="twitter:site" content="@dotnsf"/>
+<meta property="twitter:creator" content="@dotnsf"/>
+<meta property="twitter:url" content="https://github.com/dotnsf/line_liff_map/"/>
+<meta property="twitter:image" content="https://dotnsf.github.io/om/icon.png"/>
+<meta property="twitter:title" content="Rotate Map"/>
+<meta property="twitter:description" content="Rotate Map : DeviceOrientationEvent enabled map."/>
+<!-- Twitter Card // -->
+
+<title>Rotate Map</title>
+<script>
+//. 初期中心位置
+//var lat = 35.681377778;
+//var lng = 139.76736389;
+var lat = 34.8431714;
+var lng = 136.5404776;
+
+//. 初期ズームレベルと初期角度
+var zoomlevel = 10;
+var deg = 0;
+
+var map = null;
+
+function ClickRequestDeviceSensor(){
+  //. ユーザーに「許可」を明示させる必要がある
+  DeviceOrientationEvent.requestPermission().then( function( response ){
+    if( response === 'granted' ){
+      window.addEventListener( "deviceorientation", deviceOrientation );
+      $('#sensorrequest').css( 'display', 'none' );
+      $('#me').css( 'display', 'block' );
+    }
+  }).catch( function( e ){
+    console.log( e );
+  });
+
+  /*
+  DeviceMotionEvent.requestPermission().then( function( response ){
+    if( response === 'granted' ){
+      window.addEventListener( "devicemotion", deviceMotion );
+    }
+  }).catch( function( e ){
+    console.log( e );
+  });
+  */
+}
+
+$(function(){
+  activateDeviceEvent();
+
+  //. 初期位置を中心とした地図を OpenStreetMap データで表示
+  //map = L.map('demoMap', { dragging: true, zoomControl: false, minZoom: zoomlevel, maxZoom: zoomlevel }).setView( [ lat, lng ], zoomlevel );
+  map = L.map('demoMap', { dragging: true, zoomControl: false }).setView( [ lat, lng ], zoomlevel );
+  L.tileLayer(
+    '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; <a href="//openstreetmap.org/">OpenStreetMap</a>',
+      maxZoom: zoomlevel
+    }
+  ).addTo( map );
+
+  //. Geolocation API
+  if( navigator.geolocation && navigator.geolocation.getCurrentPosition ){
+    navigator.geolocation.getCurrentPosition( gotlocation );
+  }else{
+    //alert( 'No getCurrentPosition() implemented in this environment.' );
+  }
+
+  //. LIFF
+  liff.init(
+    {
+      liffId: '<%= liff_id %>'
+    }
+    //successCallback: function(){
+    //},
+    //errorCallback: function(){
+    //}
+  ).then( function(){
+    console.log( liff );
+
+    //. 以下、非公開 API ？ を順次実行
+
+    //. liff.getFeatures()
+    /* not function
+    liff.getFeatures().then( features => {
+      alert( 'getFeatures: \n' + JSON.stringify( features, null, 2 ) );
+    }).catch( err => {
+      alert( 'getFeatures: error\n' + JSON.stringify( err, null, 2 ) );
+    });
+    */
+
+    //. liff.getFriendship()
+    liff.getFriendship().then( friendship => {
+      //alert( 'getFriendship: \n' + JSON.stringify( friendship, null, 2 ) );
+    }).catch( err => {
+      //. { line: 1, column: 4325, sourceURL: 'https://static.line-scdn.net/liff/edge/2.1/init_d-i18-init_d-i19-init_d-ot.a009fd55dc6c15090c55.js' } <- access denied.
+      //. { code: "UNAUTHORIZED" }  //. from PC
+      //alert( 'getFriendship: error\n' + JSON.stringify( err, null, 2 ) );
+    });
+
+    //. liff.getAId()
+    var aid = liff.getAId();
+    //alert( 'getAId: \n' + aid ); //. undefined
+    //. liff.getProfilePlus()
+    var profileplus = liff.getProfilePlus();
+    //alert( 'getProfilePlus: \n' + profileplus ); //. undefined
+
+    //. liff.getIsVideoAutoPlay()
+    var isvideoautoplay = liff.getIsVideoAutoPlay();
+    //alert( 'getIsVideoAutoPlay: \n' + isvideoautoplay ); //. false
+
+    //. liff.userPicker()
+    /* 検索ダイアログが開く？
+    liff.userPicker( "dotnsf" ).then( userpicker => {
+      //alert( 'userPicker: \n' + JSON.stringify( userpicker, null, 2 ) );
+    }).catch( err => {
+      //. { code: "EXCEPTION_IN_SUBWINDOW", line: 1, column: 4325, sourceURL: 'https://static.line-scdn.net/liff/edge/2.1/init_d-i18-init_d-i19-init_d-ot.a009fd55dc6c15090c55.js' } <- access denied.
+      //. { code: "UNAUTHORIZED" }  //. from PC
+      //alert( 'userPicker: error\n' + JSON.stringify( err, null, 2 ) );
+    });
+    */
+
+    //. liff.permanentLink.createUrl()
+    var createurl = liff.permanentLink.createUrl();
+    //alert( 'permanentLink.createUrl: \n' + createurl ); //. https://liff.line.me/1647881612-3EQxl2Jy/  <- オリジナルURLへリダイレクト？
+
+    //. liff.permanentLink.setExtraQueryParam()
+    var setextraqueryparam = liff.permanentLink.setExtraQueryParam( "name=dotnsf" );
+    //alert( 'permanentLink.setExtraQueryParam: \n' + setextraqueryparam ); //. undefined
+
+    //. liff.getAdvertisingId()  : alert が表示されない？？
+    liff.getAdvertisingId().then( advertisingid => {
+      //alert( 'getAdvertisingId: \n' + JSON.stringify( advertisingid, null, 2 ) );
+    }).catch( err => {
+      //. { code: "UNAUTHORIZED" }  //. from PC
+      //alert( 'getAdvertisingId: error\n' + JSON.stringify( err, null, 2 ) );
+    });
+
+    //. liff.addToHomeScreen() : alert が表示されない？？
+    liff.addToHomeScreen( {} ).then( addtohomescreen => {
+      //alert( 'addToHomeScreen: \n' + JSON.stringify( addtohomescreen, null, 2 ) );
+    }).catch( err => {
+      //. { code: "UNAUTHORIZED" }  //. from PC
+      //alert( 'addToHomeScreen: error\n' + JSON.stringify( err, null, 2 ) );
+    });
+
+    var token = liff.getDecodedIDToken();
+    //alert( 'getDecodedIDToekn: \n' + token ); //. undefined
+
+    //. スマホからだと実行されていない？
+    liff.getProfile()
+      .then( profile => {
+        alert( JSON.stringify( profile, null, 2 ) );
+      }).catch( err => {
+        //. { code: "UNAUTHORIZED" }  //. from PC
+        alert( JSON.stringify( err, null, 2 ) );
+      });
+  });
+});
+
+function gotlocation( position ){
+  //. LIFF 環境内からもここは実行されている
+  lat = position.coords.latitude;
+  lng = position.coords.longitude;
+
+  var zoom = map.getZoom(); //. lat, lng, zoom の値自体は正しく取得できている
+  //map.panTo( [ lat, lng ], { animate: true } );
+  //map.setZoom( zoom + 3 );
+  //. この直後に元の位置に戻ってしまう？　何故？？
+
+  //. setView を使うとできるっぽい
+  map.setView( [ lat, lng ], zoom + 3 );
+}
+
+function activateDeviceEvent(){
+  if( window.DeviceOrientationEvent ){
+    if( window.DeviceOrientationEvent.requestPermission && typeof window.DeviceOrientationEvent.requestPermission === 'function' ){
+      //. for iOS13
+      $('#me').css( 'display', 'none' );
+      var banner = '<div id="sensorrequest" onclick="ClickRequestDeviceSensor();" style="z-index:1; position:absolute; width:100%; background-color:#000; color:#fff;><p style="padding:10px;">センサーの有効化</p></div>';
+      $('body').prepend( banner );
+    }else{
+      window.addEventListener( "deviceorientation", deviceOrientation );
+    }
+  }
+}
+
+function deviceOrientation( e ) {
+  e.preventDefault();
+
+  var tiltLR = e.gamma;
+  //var tiltFB = e.beta;
+  //var dir = e.alpha;
+  rotateMap( tiltLR );
+}
+
+function rotateMap( tiltLR ){
+  deg = tiltLR;
+  if( tiltLR < 0 ){
+    deg += 360;
+  }
+  $('#demoMap').css( 'transform', 'rotate(-'+deg+'deg)' );
+  $('#me').html( Math.floor( tiltLR ) );
+}
+</script>
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  padding: 0px;
+  margin: 0px;
+}
+/* スクロールバー無効処理 */
+body {
+  overflow-x: scroll;
+  overflow-y: scroll;
+  -ms-overflow-style: none;  /* IE, Edge用 */
+  scrollbar-width: none;     /* Firefox用 */
+}
+body::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari用 */
+}
+#demoMap {
+  position: fixed;
+  width: 200%;
+  height: 200%;
+  left: -50%;
+  top: -50%;
+}
+#me{
+  z-index: 2;
+  position: absolute;
+  color: #ff0000;
+  font-size: 24pt;
+  left: 50%;
+  top: 50%;
+}
+</style>
+</head>
+<body>
+  <div id="demoMap"></div>
+  <div id="me">
+  </div>
+</body>
+</html>
