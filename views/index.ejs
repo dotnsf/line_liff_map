@@ -212,20 +212,13 @@ function activateDeviceEvent(){
 
 function deviceOrientation( e ) {
   e.preventDefault();
-
-  var tiltLR = e.gamma;
-  //var tiltFB = e.beta;
-  //var dir = e.alpha;
-  rotateMap( tiltLR );
+  rotateMap( e.alpha, e.beta, e.gamma );
 }
 
-function rotateMap( tiltLR ){
-  deg = tiltLR;
-  if( tiltLR < 0 ){
-    deg += 360;
-  }
-  $('#demoMap').css( 'transform', 'rotate(-'+deg+'deg)' );
-  $('#me').html( Math.floor( tiltLR ) );
+function rotateMap( a, b, c ){
+  deg = c;
+  $('#demoMap').css( 'transform', 'rotate('+deg+'deg)' );
+  $('#me').html( Math.floor( deg ) );
 }
 </script>
 <style>
