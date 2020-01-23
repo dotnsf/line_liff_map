@@ -76,11 +76,12 @@ $(function(){
 
   //. 初期位置を中心とした地図を OpenStreetMap データで表示
   //map = L.map('demoMap', { dragging: true, zoomControl: false, minZoom: zoomlevel, maxZoom: zoomlevel }).setView( [ lat, lng ], zoomlevel );
-  map = L.map('demoMap', { dragging: true, zoomControl: false }).setView( [ lat, lng ], zoomlevel );
+  map = L.map('demoMap', { dragging: false, zoomControl: false, minZoom: zoomlevel - 7, maxZoom: zoomlevel + 7 }).setView( [ lat, lng ], zoomlevel );
   L.tileLayer(
     '//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: 'Map data &copy; <a href="//openstreetmap.org/">OpenStreetMap</a>',
-      maxZoom: zoomlevel
+      minZoom: zoomlevel - 7,
+      maxZoom: zoomlevel + 7,
     }
   ).addTo( map );
 
@@ -191,10 +192,10 @@ function gotlocation( position ){
   var zoom = map.getZoom(); //. lat, lng, zoom の値自体は正しく取得できている
   //map.panTo( [ lat, lng ], { animate: true } );
   //map.setZoom( zoom + 3 );
-  //. この直後に元の位置に戻ってしまう？　何故？？
+  //. panTo だと、この直後に元の位置に戻ってしまう？　何故？？
 
   //. setView を使うとできるっぽい
-  map.setView( [ lat, lng ], zoom + 3 );
+  map.setView( [ lat, lng ], zoom + 7 );
 }
 
 function activateDeviceEvent(){
@@ -216,9 +217,10 @@ function deviceOrientation( e ) {
 }
 
 function rotateMap( a, b, c ){
-  deg = c;
+  deg = a - 180;
   $('#demoMap').css( 'transform', 'rotate('+deg+'deg)' );
   $('#me').html( Math.floor( deg ) );
+  //$('#me').html( Math.floor( a ) + '<br/>' + Math.floor( b ) + '<br/>' + Math.floor( c ) );
 }
 </script>
 <style>
